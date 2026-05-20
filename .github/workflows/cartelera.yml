@@ -1,16 +1,18 @@
-name: Mostrar Cartelera de Amposta
+name: Mostrar y Guardar Cartelera de Amposta
 
-# Cuándo se ejecutará esta acción
 on:
   schedule:
     # Se ejecuta todos los días a las 08:00 UTC (10:00 hora de España)
     - cron: '0 8 * * *'
-  # Permite ejecutar la acción manualmente desde la pestaña "Actions" en GitHub
-  workflow_dispatch:
+  workflow_dispatch: # Permite ejecutarlo manualmente desde GitHub
 
 jobs:
   scrape-movies:
     runs-on: ubuntu-latest
+    
+    # IMPORTANTE: Permite que la acción guarde y suba archivos al repositorio
+    permissions:
+      contents: write
     
     steps:
       - name: 📥 Descargar el código del repositorio
@@ -26,5 +28,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests beautifulsoup4
           
-      - name: 🚀 Ejecutar el script para mostrar la taquilla
+      - name: 🚀 Ejecutar el script para mostrar y guardar la taquilla
         run: python scraper.py
+        
+      - name: 💾 Subir el archivo de texto generado al repositorio
+        run: |
+          # Configuramos el bot de GitHub que hará el commit
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          # Añadimos el archivo generado
+          git add cartelera.txt
+          
+          # Solo hacemos commit y push si el archivo ha cambiado (para evitar errores si es igual)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "📝 Actualización automática de la cartelera" && git push)
