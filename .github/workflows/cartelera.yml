@@ -1,0 +1,30 @@
+name: Mostrar Cartelera de Amposta
+
+# Cuándo se ejecutará esta acción
+on:
+  schedule:
+    # Se ejecuta todos los días a las 08:00 UTC (10:00 hora de España)
+    - cron: '0 8 * * *'
+  # Permite ejecutar la acción manualmente desde la pestaña "Actions" en GitHub
+  workflow_dispatch:
+
+jobs:
+  scrape-movies:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Descargar el código del repositorio
+        uses: actions/checkout@v4
+
+      - name: 🐍 Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: 📦 Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4
+          
+      - name: 🚀 Ejecutar el script para mostrar la taquilla
+        run: python scraper.py
