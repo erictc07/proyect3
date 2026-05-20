@@ -1,20 +1,25 @@
-name: Mostrar y Guardar Cartelera de Amposta
+name: Ejecutar Cartelera en cada Commit
 
+# 1. Indicamos que se ejecute cada vez que subas código (Push)
 on:
-  schedule:
-    - cron: '0 8 * * *'
-  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch: # Mantenemos este botón por si el profesor quiere probarlo a mano
 
 jobs:
-  scrape-movies:
+  actualizar-cartelera:
     runs-on: ubuntu-latest
     
-    # Permisos necesarios para escribir el fichero .txt en tu repositorio
-    permissions:
-      contents: write
+    # 2. REGLA ANTIBUCLE: Si el commit lo hace el propio bot al guardar el .txt, NO se vuelve a ejecutar
+    if: github.actor != 'github-actions[bot]'
     
+    permissions:
+      contents: write # Permiso para que GitHub guarde el archivo .txt
+      
     steps:
-      - name: 📥 Descargar el código
+      - name: 📥 Descargar el código del repositorio
         uses: actions/checkout@v4
 
       - name: 🐍 Configurar Python
@@ -27,12 +32,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests beautifulsoup4
           
-      - name: 🚀 Ejecutar el scraper
+      - name: 🚀 Ejecutar el scraper de la cartelera
         run: python scraper.py
         
-      - name: 💾 Subir el archivo de texto a GitHub
+      - name: 💾 Guardar y subir el archivo cartelera.txt a GitHub
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add cartelera.txt
-          git diff --quiet && git diff --staged --quiet || (git commit -m "🎬 Cartelera actualizada" && git push)
+          # Solo hace commit si las películas han cambiado
+          git diff --quiet && git diff --staged --quiet || (git commit -m "📝 Cartelera actualizada automáticamente" && git push)
